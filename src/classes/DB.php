@@ -177,6 +177,8 @@ class DB {
         if(array_key_exists("WHERE",$conditions)){
             // Continue the query with a 'WHERE'
             $this->_sql .= ' WHERE ';
+
+            // We will use $i to see if we are at the first condition so set it to 0
             $i = 0;
 
             // Loop through the array
@@ -213,10 +215,41 @@ class DB {
     } // whereClause ()
 
     private function orderClause ($conditions) {
+
+        /** Notes for multiple order clause
+         *
+         *  Can work the same as the foreach/preSql in the where
+         *
+         *  Need to decide whether to array the elements
+         *  ('Name', 'ASC')
+         *  
+         *  Or just write them as a whole
+         *  Name ASC
+         *
+        **/
+
+
+
+
         if(array_key_exists("ORDER",$conditions)){
             // Continue the query with an 'ORDER BY'
-            $this->_sql .= ' ORDER BY '.$conditions['ORDER'];
-        }
+            $this->_sql .= ' ORDER BY ';
+
+            // We will use $i to see if we are at the first condition so set it to 0
+            $i = 0;
+
+            foreach($conditions['ORDER'] as $value){
+
+                // If we have more than one condition, prefix each one (after the first) with ', '
+                $this->_sql .= ($i > 0) ? ', ' : '';
+
+                // Add the ORDER BY condition
+                $this->_sql .= $value;
+
+                // Increment the counter
+                $i++;
+            } // End foreach
+        } // End array_key_exists
     } // orderClause ()
 
     private function limitClause ($conditions) {

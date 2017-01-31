@@ -32,7 +32,11 @@ $query_select = $db->select(
             'Population' => array("BETWEEN", array('100000','500000')), 
             'CountryCode' => array("IN", array('IND','TUR'))
         ),
-        'ORDER'=>'Population DESC',
+        'ORDER'=>array(
+                'CountryCode ASC', 
+                'Population DESC'
+            ),
+
         'LIMIT'=> 10
     )
 );
@@ -40,7 +44,7 @@ $query_select = $db->select(
 ```
 This will create a query of
 ```php
-SELECT * FROM `city` WHERE `Population` BETWEEN ? AND ? AND `CountryCode` IN (?, ?) ORDER BY Population DESC LIMIT 10
+SELECT * FROM `city` WHERE `Population` BETWEEN ? AND ? AND `CountryCode` IN (?, ?) ORDER BY CountryCode ASC, Population DESC DESC LIMIT 10
 ```
 With bindings of 
 ```php
@@ -77,5 +81,13 @@ Which would return
 
 Version History
 ------------
+####Dev
+Switched the ORDER BY function into an array
+    Updated example_select_multiple.php with new method
+    Updated index.php with new instructions
+    Updated README.md with new eample
+
+A few bits of erroneous commenting fixed
+
 ####1.0
 Initial Build
