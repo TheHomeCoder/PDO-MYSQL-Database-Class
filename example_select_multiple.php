@@ -35,7 +35,7 @@ $db = DB::dbConnect();
 
 <h1>Database Class | Select Multiple Rows Example</h1>
 <p class="lead">
-    Show 10 cities from India or Turkey where population is between one and five million ordered from highest population to lowest. 
+    Show 10 cities from India or Turkey where population is between one hundred thousand and five hundred thousand ordered by the country code in ascending order then the highest population to lowest. 
 </p>
 <p>
     As this returns multiple rows, it uses the 'all' parameter in the getRows() function. See an example of a <a href="example_select_single.php">Single Returned Row</a>.  
@@ -54,7 +54,10 @@ $query_select = $db->select(
             'Population' => array("BETWEEN", array('100000','500000')), 
             'CountryCode' => array("IN", array('IND','TUR'))
         ),
-        'ORDER'=>'Population DESC',
+        'ORDER'=>array(
+            'CountryCode ASC', 
+            'Population DESC'
+        ),
         'LIMIT'=> 10
     )
 );
@@ -123,11 +126,11 @@ $query_select = $db->select(
          *  )
          *
          *  [2] => (
-         *      [ID] => 3366
-         *      [Name] => Diyarbakir
-         *      [CountryCode] => TUR
-         *      [District] => Diyarbakir
-         *      [Population] => 479884
+         *      [ID] => 1076
+         *      [Name] => Guntur
+         *      [CountryCode] => IND
+         *      [District] => Andhra Pradesh
+         *      [Population] => 471051
          *  )
          *  
          *  As we assign each of these sets of column data to a variable called $city as we loop
@@ -147,8 +150,8 @@ $query_select = $db->select(
          *  )
          *
          *  $city => (
-         *      [ID] => 3366
-         *      [Name] => Diyarbakir
+         *      [ID] => 1076
+         *      [Name] => Guntur
          *      etc...
          *  )
          *
@@ -209,7 +212,10 @@ $query_select = $db->select(
             'Population' => array("BETWEEN", array('100000','500000')), 
             'CountryCode' => array("IN", array('IND','TUR'))
         ),
-        'ORDER'=>'Population DESC',
+        'ORDER'=>array(
+            'CountryCode ASC', 
+            'Population DESC'
+        ),
         'LIMIT'=> 10
     )
 );

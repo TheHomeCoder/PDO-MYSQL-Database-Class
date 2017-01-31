@@ -168,15 +168,18 @@ The available conditions are
             </ul>
         </li>
         <li>
-            'ORDER' - key/value pairing - Only used in select()<br>
+            'ORDER' - array - Only used in select()<br>
             The order to sort the results on <br>
             EG. 
             <pre>
-            'ORDER'=>'Population DESC',
+            'ORDER'=>array(
+                'CountryCode ASC', 
+                'Population DESC'
+            ),
 
             Equivalent to a MySQL query of
 
-            ORDER BY `Population` DESC
+            ORDER BY CountryCode ASC, Population DESC
             </pre>
         </li>
        
