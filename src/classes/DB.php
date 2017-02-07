@@ -89,16 +89,26 @@ class DB {
         $table is the table to run the query on
         $conditions is an array of any other parameters for the query (WHERE, ORDER BY, LIMIT and START)
     */
-    private function crud ($method, $table, $conditions = array()) {
+    private function crud ($method, $tables, $conditions = array()) {
+
+
+        
         $this->_bindArray = array();
         // Start building the query
         $this->_sql = $method . ' ';
+
+
+
+        
+
+
 
         // Continue building the query depending on the query type
         $this->_sql .= $this->tableAction ($method);
 
         // Now add the table itself to the query
-        $this->_sql .= '`'.$table.'`';
+        $this->_sql .= $this->tables ($tables);
+
 
         // Continue the query based on what method we are using
         if ($method == 'INSERT') {
@@ -133,7 +143,7 @@ class DB {
         } 
 
         if ($method == 'SELECT') {
-            $this->whereClause ($conditions);
+            $this->whereClause ($tables);
             $this->orderClause ($conditions);
             $this->limitClause ($conditions);
             $this->runQuery ();
@@ -165,6 +175,28 @@ class DB {
     }
 
 
+    private function tables ($tables) {
+
+       
+
+        $out = '';
+        foreach ($tables as $key => $value) {
+            //nicePrint_r($value, $title = 'value');
+
+            $joinType = (isset($value['join'])) ? $value['join']['join_type'] . ' JOIN' : '';
+            $joinOn = (isset($value['join'])) ?  'ON ' . $key.'.'.$value['join']['local_key'] . ' = ' . $value['join']['foreign_table'].'.'.$value['join']['foreign_key'] : '';
+
+            
+            $out .= $joinType.' `' . $key . '` '.$joinOn;
+        }
+        return $out;
+
+    } // whereClause ()
+
+
+
+
+
     /** QUERY BUILDING FUNCTIONS
 
         whereClause()
@@ -173,45 +205,114 @@ class DB {
 
         Simply handles the WHERE, ORDER BY and LIMIT parts of the query
     */
-    private function whereClause ($conditions) {
-        if(array_key_exists("WHERE",$conditions)){
-            // Continue the query with a 'WHERE'
-            $this->_sql .= ' WHERE ';
+    private function whereClause ($tables) {
 
-            // We will use $i to see if we are at the first condition so set it to 0
-            $i = 0;
+        $this->where = false;
 
-            // Loop through the array
-            foreach($conditions['WHERE'] as $key => $value){
-                // If we have more than one condition, prefix each one (after the first) with 'AND'
-                $preSql = ($i > 0) ? ' AND ' : '';
-                // Depending on the operator, we need to structure the WHERE clause slightly differently
-                switch($value[0]) {
-                    case '>':
-                    case '<':
-                    case '=':
-                    case 'LIKE':
-                        $this->whereElementStandard ($preSql, $key, $value);
-                        break;
+        foreach ($tables as $key => $value) {
+            $this->table = $key;
 
-                    case 'IN':
-                        $this->whereElementIn ($preSql, $key, $value); 
-                        break;
+             echo '<h3>'.$key.'</h2>';
 
-                    case 'BETWEEN':
-                        $this->whereElementBetween ($preSql, $key, $value); 
-                        break;
+             if(array_key_exists("where",$value)){
+                // We will use $i to see if we are at the first condition so set it to 0
+                    $i = 0;
 
-                    default:
-                        $this->whereElementStandard ($preSql, $key, $value);
-                        break;
-                } // End switch
+                    // Loop through the array
+                    //nicePrint_r($value['where'], $title = '$value[where]');
+                    foreach($value['where'] as $key => $value){
+                        // If we have more than one condition, prefix each one (after the first) with 'AND'
+                        $preSql = ($this->where) ? ' AND ' : ' WHERE ';
+                        // Depending on the operator, we need to structure the WHERE clause slightly differently
+                        switch($value[0]) {
+                            case '>':
+                            case '<':
+                            case '=':
+                            case 'LIKE':
+                                $this->whereElementStandard ($preSql, $key, $value);
+                                break;
 
-                // Increment the counter
-                $i++;
+                            case 'IN':
+                                $this->whereElementIn ($preSql, $key, $value); 
+                                break;
+
+                            case 'BETWEEN':
+                                $this->whereElementBetween ($preSql, $key, $value); 
+                                break;
+
+                            default:
+                                $this->whereElementStandard ($preSql, $key, $value);
+                                break;
+                        } // End switch
+
+                        // Increment the counter
+                        $i++;
+                       $this->where = true;     
+                    } // End foreach
+
                     
-            } // End foreach
-        } // End array_key_exists
+            }
+             //nicePrint_r($value, $title = 'tablesvalue');
+           //  nicePrint_r($value['where'], $title = 'tablesvalue[where]');
+        }
+
+        if($this->where) {
+            echo 'WHERE';
+        }
+    
+     //nicePrint_r($tables, $title = 'tables');  
+/*
+        foreach ($tables as $key => $value1) {
+            echo '<h3>'.$key.'</h2>';
+            $this->table = $key;
+            
+            nicePrint_r($value1, $title = 'tablesvalue');
+            if(array_key_exists("where",$value1)){
+                  //  echo 'Has Where';
+
+                    $this->_sql .= ' WHERE ';
+
+                    // We will use $i to see if we are at the first condition so set it to 0
+                    $i = 0;
+
+                    // Loop through the array
+                    nicePrint_r($value1['where'], $title = '$value[where]');
+                    foreach($value1['where'] as $key => $value){
+                        // If we have more than one condition, prefix each one (after the first) with 'AND'
+                        $preSql = ($i > 0) ? ' AND ' : '';
+                        // Depending on the operator, we need to structure the WHERE clause slightly differently
+                        switch($value[0]) {
+                            case '>':
+                            case '<':
+                            case '=':
+                            case 'LIKE':
+                                $this->whereElementStandard ($preSql, $key, $value);
+                                break;
+
+                            case 'IN':
+                                $this->whereElementIn ($preSql, $key, $value); 
+                                break;
+
+                            case 'BETWEEN':
+                                $this->whereElementBetween ($preSql, $key, $value); 
+                                break;
+
+                            default:
+                                $this->whereElementStandard ($preSql, $key, $value);
+                                break;
+                        } // End switch
+
+                        // Increment the counter
+                        $i++;
+                            
+                    } // End foreach
+
+                    
+            }
+            return $this->_sql;
+        }
+
+   */
     } // whereClause ()
 
     private function orderClause ($conditions) {
@@ -316,7 +417,7 @@ class DB {
         Example : `id` BETWEEN ? AND ?
     */
     private function whereElementStandard ($preSql, $key, $value) {
-        $this->_sql .= $preSql . '`' . $key . '` ' . $value[0]. ' ?';
+        $this->_sql .= $preSql . '`'.$this->table.'`'.'.'.'`'.$key .'`'. ' ' . $value[0]. ' ?';
         $this->_bindArray[] .= $value[1];
     }
 
@@ -331,7 +432,7 @@ class DB {
             $x++;
         }
 
-        $this->_sql .= $preSql . '`' . $key . '` ' . $value[0]. ' ('.$fields.')';
+        $this->_sql .= $preSql . '`'.$this->table.'`'.'.'.'`'.$key .'`' . ' ' . $value[0]. ' ('.$fields.')';
     }
 
     private function whereElementBetween ($preSql, $key, $value) {
@@ -342,7 +443,8 @@ class DB {
             $this->_bindArray[] .= $newbindValue;
         }
 
-        $this->_sql .= $preSql . '`' . $key . '` ' . $value[0]. ' ? AND ?';
+        $this->_sql .= $preSql . '`'.$this->table.'`'.'.'.'`'.$key .'`' . ' ' . $value[0].  ' ? AND ?';
+      
 
     }
 
