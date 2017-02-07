@@ -83,9 +83,13 @@ Version History
 ------------
 ####1.1
 Switched the ORDER BY function into an array
+
 Updated example_select_multiple.php with new method
+
 Updated index.php with new instructions
+
 Updated README.md with new example
+
 
 A few bits of erroneous commenting fixed
 
