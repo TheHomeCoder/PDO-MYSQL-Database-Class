@@ -43,24 +43,58 @@ class DB {
     }
 
 
-    /** dbConnect()
+    /** PUBLIC FUNCTIONS
+     *  
+     *  dbConnect()     Opens a connection to the database
+     *-----------------------------------------------------
+     *
+     *  select()        Runs a 'SELECT' query
+     *  delete()        Runs a 'DELETE' query
+     *  insert()        Runs a 'INSERT' query
+     *  update()        Runs a 'UPDATE' query
+     *
+     *  $table          An array of tables, fields and where criteria
+     *  $conditions     An array of conditions such as ORDER BY and LIMIT
+     *
+     *  These pass the data into the private function crud()
+     *
+     *-----------------------------------------------------
+     *  fullQuery()     Runs a full SQL query
+     *  
+     *  $sql            A full SQL query
+     *
+     *-----------------------------------------------------
+     *  
+    **/
 
-    *   Create a connection to the database
-    */
     public static function dbConnect() {
+        
         if(!isset(self::$_instance)) {
             self::$_instance = new DB();
         }
         return self::$_instance;
     }
 
-    /** fullQuery()
+    public function select ($table, $conditions = array()) {
 
-        Process a full query for complex ones that contain JOINed tables or OR's in the WHERE clause.
-        Look at creating a better function at a later date.
+        return $this->crud('SELECT', $table, $conditions);        
+    }
 
-        $sql the sql statenebt to run the query on
-    */
+    public function delete ($table, $conditions = array()) {
+        
+        return $this->crud('DELETE', $table, $conditions);
+    }
+
+    public function insert ($table, $conditions = array()) {
+        
+        return $this->crud('INSERT', $table, $conditions);
+    }
+
+    public function update ($table, $conditions = array()) {
+        
+        return $this->crud('UPDATE', $table, $conditions);
+    }
+
     public function fullQuery ($sql) {
         $this->_bindArray = array();
         $this->error = false;
@@ -83,35 +117,50 @@ class DB {
 
 
     /** crud()
-        This is the main function that all of the others are passed into for processing
+     *  This is the main function that all of the others are passed into for processing
+     *
+     *  $method         The type of query (SELECT, INSERT, UPDATE, DELETE)
+     *  $tables         An array of tables, fields and where criteria passed in from the public function
+     *  $conditions     An array of any other parameters for the query (WHERE, ORDER BY, LIMIT and START)
+    **/
 
-        $method is the type of query (SELECT, INSERT, UPDATE, DELETE)
-        $table is the table to run the query on
-        $conditions is an array of any other parameters for the query (WHERE, ORDER BY, LIMIT and START)
-    */
-    private function crud ($method, $tables, $conditions = array()) {
+    private function crud ($action, $tables, $conditions = array()) {
+
+        // The final SQL statement is built using four variables so null them first
+        $this->show_fields = null;
+        $this->show_tables = null;
+        $this->show_table_action = null;
+        $this->show_where = null;
 
 
-        
+        // All of the bindings for the query get placed in an array so create it
         $this->_bindArray = array();
-        // Start building the query
-        $this->_sql = $method . ' ';
+
+        // Collect the fields, tables and joins, and where clauses
+        $this->buildQuery ($tables, $action);
+
+
+        // Start building the query by adding the method (SELECT, DELETE, INSERT, UPDATE) to the start of the SQL statement
+        $this->_sql = $action . ' ';
 
 
 
-        
+        // Add all of the parts of the SQL statement to $this->_sql 
+        $this->_sql .= $this->show_fields;
+        $this->_sql .= $this->show_tables;
+        $this->_sql .= $this->show_where;
 
 
 
-        // Continue building the query depending on the query type
-        $this->_sql .= $this->tableAction ($method);
-
-        // Now add the table itself to the query
-        $this->_sql .= $this->tables ($tables);
+        if ($action == 'SELECT') {
+            $this->orderClause ($conditions);
+            $this->limitClause ($conditions);
+            $this->runQuery ();
+        } 
 
 
         // Continue the query based on what method we are using
-        if ($method == 'INSERT') {
+        if ($action == 'INSERT') {
             if(array_key_exists("FIELDS",$conditions)){
                  
                 $keys = array_keys($conditions['FIELDS']);
@@ -137,19 +186,12 @@ class DB {
             }
         } 
         
-        if ($method == 'DELETE') {
+        if ($action == 'DELETE') {
             $this->whereClause ($conditions);
             $this->runQuery ();
         } 
 
-        if ($method == 'SELECT') {
-            $this->whereClause ($tables);
-            $this->orderClause ($conditions);
-            $this->limitClause ($conditions);
-            $this->runQuery ();
-        } 
-
-        if ($method == 'UPDATE') {
+        if ($action == 'UPDATE') {
             if(array_key_exists("FIELDS",$conditions)){
                  
                 $keys = array_keys($conditions['FIELDS']);
@@ -172,168 +214,270 @@ class DB {
 
 
         return $this;
-    }
+    } //function crud ()
 
-
-    private function tables ($tables) {
-
-       
-
-        $out = '';
+    /**  Build the parts of the SQL statement
+     *
+     *  Creates the fields to select, tables and their joins, the where clause
+     *  and the action (FROM, SET etc)
+     *
+    **/
+    private function buildQuery ($tables, $action) {
+      
+        // All of the selected fields for the query get placed in an array so create it
+        $this->fields_output = array();
+        
+        
+        // Loop through all the tables where the $key will be the table name and the $value will be the 
+        // 'fields', 'where' and 'joins' arrays for the table.
         foreach ($tables as $key => $value) {
-            //nicePrint_r($value, $title = 'value');
 
-            $joinType = (isset($value['join'])) ? $value['join']['join_type'] . ' JOIN' : '';
-            $joinOn = (isset($value['join'])) ?  'ON ' . $key.'.'.$value['join']['local_key'] . ' = ' . $value['join']['foreign_table'].'.'.$value['join']['foreign_key'] : '';
+            // Set the table to $this->table as we will be using this in several nested functions
+            $this->table = $key;
 
+            // Create the required fields part of the SQL statement and add it to $this->show_fields
+            $this->show_fields = $this->buildFields ($value['fields']);
+
+            // Create the tables and joooins part of the SQL statement and add it to $this->show_fields
+            $this->show_tables = $this->buildTables ($tables, $action);
+
+            // Call the buildWhere () function to build up the $this->show_where variable
+            $this->buildWhere ($value['where']);
+
+        } // End foreach
+
+    } // buildQuery ()
+
+
+    /**  Set the action part of the SQL statement
+     *
+     *  Sets the correct action (FROM, SET etc) for the table in the query. 
+     *  
+     *  Creates the $this->show_table_action variable to be used just before $this->show_tables
+     *
+     *  $action         The type of query (SELECT, INSERT, UPDATE, DELETE)
+     *
+    **/
+    private function tableAction ($action) {
+
+        // Simply switch the $action variable for the correct type of action
+        switch ($action) {
+            case 'SELECT':
+                $data = ' FROM ';
+                break;
             
+            case 'INSERT':
+                $data = 'INTO ';
+                break;
+            
+            case 'UPDATE':
+                $data = '';
+                break;
+            
+            case 'DELETE':
+                $data = 'FROM ';
+                break;
+            
+            default:
+                $data = ' FROM ';
+                break;
+        } // End switch statement
+
+        // Create the variable from the data return
+        return $data;
+
+   } // tableAction ()
+
+
+    /**  Build the fields
+     *
+     *  Returns the specified fields to add to the SQL statement and passes it back
+     *  to $this->show_fields in buildQuery().
+     *
+     *  For each of the tables, check to see if any fields have been selected and if so,
+     *  create a `table`.`column` pairing for each of them in the $this->fields_output array.
+     *  If not, add `table`* to the $this->fields_output array.
+     *
+     *  At the end, if the $this->fields_output array contains any data, return it,
+     *  otherwise just return ' * '.
+     *
+     *  $array          An array of fields passed in from buildQuery()
+     *
+    **/
+    private function buildFields ($array) {
+
+        // Only do anything if the array contains anything
+        if($array){
+            
+            // Loop through the array where $key is the column name and $value are the 
+            // arrays for that column such as 'alias' and 'count'
+            foreach ($array as $key => $value) {
+
+                // Create the `table`.`column` pair and add it to the $this->fields_output array
+                $this->fields_output[] .= '`'.$this->table.'`'.'.'.'`'.$key.'`';
+                   
+            } // End foreach
+
+        } else {
+            
+            // The array contains no data so add `table`* to the $this->fields_output array
+            $this->fields_output[] .= '`'.$this->table.'`'.'.*';
+                
+        } // End if $array
+
+        // If there is anything in the $this->fields_output array, implode it, otherwise just return ' * ' 
+        return ($this->fields_output) ? implode($this->fields_output, ', ') : ' * ';
+
+
+    } // buildFields ()
+
+
+    /**  Build the tables
+     *
+     *  Returns the correct action (FROM, SET etc), followed by the tables and their joins to the SQL 
+     *  statement and passes it back to $this->show_tables in buildQuery(). 
+     *
+     *  For each of the tables, wrap the table name in backticks and , wrap it in the join criteria if set. 
+     *
+     *  $tables         An array of tables, fields and where criteria passed in from buildQuery()
+     *  $action         The type of query (SELECT, INSERT, UPDATE, DELETE) passed in from buildQuery()
+     *
+    **/
+    private function buildTables ($tables, $action) {
+
+        // Set the table action (FROM, SET etc)
+        $out =  $this->tableAction ($action);
+
+        // Loop through all the tables in the array - $ket is the table name
+        foreach ($tables as $key => $value) {
+
+            // We use two variables the wrap the table name in if it is a joined table so clear them of any old data
+            $joinType = '';
+            $joinOn = '';
+
+            /**  Create the table joins
+             *
+             *  If a join has been specified, create it along with the criteria
+             *
+             *  $joinType
+             *  Prepends the join type (LEFT, RIGHT etc) to the word 'JOIN'
+             *
+             *  $joinOn
+             *  Adds the parameters for the join
+             *
+             *  Starts with 'ON ' and then adds the first table.column using 
+             *  $key.'.'.$value['join']['local_key']
+             *
+             *  It the adds ' = ' before adding the second table.column using
+             *  $value['join']['foreign_table'].'.'.$value['join']['foreign_key']
+             *
+           **/
+
+            // Prepend the join type (LEFT, RIGHT etc) to the word 'JOIN'
+
+            if(isset($value['join'])) {
+                $joinType = $value['join']['join_type'] . ' JOIN';
+                $joinOn = 'ON ' . $key.'.'.$value['join']['local_key'] . ' = ' . $value['join']['foreign_table'].'.'.$value['join']['foreign_key'];
+            } // if join
+           
+            // Wrap the table name ($key) with the join parts. The join parts will be empty strings if no join was set
             $out .= $joinType.' `' . $key . '` '.$joinOn;
-        }
+
+        } // foreach
+
+        // Return the tables part of the SQL statement
         return $out;
 
-    } // whereClause ()
+    } // buildTables ()
 
+
+    /**  Build the where clause
+     *
+     *  Returns the where clause to add to the SQL statement and passes it back
+     *  to $this->show_where in buildQuery().
+     *
+     *  For each of the tables, check to see if any fields have been selected and if so,
+     *  create a `table`.`column` pairing for each of them in the $this->fields_output array.
+     *  If not, add `table`* to the $this->fields_output array.
+     *
+     *  At the end, if the $this->fields_output array contains any data, return it,
+     *  otherwise just return ' * '.
+     *
+     *  $array          An array of fields passed in from buildQuery()
+     *
+    **/
+    private function buildWhere ($array) {
+
+        // Only do anything if the array contains anything
+        if($array){ 
+
+            // Loop through the array where $key is the column name and $value are the 
+            // array containing the operator [0] and values [1]
+            foreach($array as $key => $value){ 
+
+                // We set each element of the where clause to $this->where before setting it to
+                // $this->show_where. If it already exists we must have already have something
+                // in the where clause so set $preSql to ' AND ' otherwise set it to ' WHERE '
+                $preSql = (isset($this->where)) ? ' AND ' : ' WHERE ';
+
+                // As we need different ways of building the where clause elements, depending on
+                // the operator ($value[0]), we run a switch statement to call the function to
+                // build the correct type of element, passing in the field name ($key) and the
+                // operator and criteria ($value array)
+                switch($value[0]) {
+                    case '>':
+                    case '<':
+                    case '=':
+                    case 'LIKE':
+                        $this->where = $this->whereElementStandard ($key, $value);
+                        break;
+
+                    case 'IN':
+                        $this->where = $this->whereElementIn ($key, $value); 
+                        break;
+
+                    case 'BETWEEN':
+                        $this->where = $this->whereElementBetween ($key, $value); 
+                        break;
+
+                    default:
+                        $this->where = $this->whereElementStandard ($key, $value);
+                        break;
+                } // End switch
+
+           
+                // Add the created where clause elements to $this->show_where
+                $this->show_where .= $preSql.$this->where;
+            } // End foreach
+        } // End if $array
+    } // buildWhere ()
 
 
 
 
     /** QUERY BUILDING FUNCTIONS
 
-        whereClause()
+
         orderClause()
         limitClause()
 
         Simply handles the WHERE, ORDER BY and LIMIT parts of the query
     */
-    private function whereClause ($tables) {
-
-        $this->where = false;
-
-        foreach ($tables as $key => $value) {
-            $this->table = $key;
-
-             echo '<h3>'.$key.'</h2>';
-
-             if(array_key_exists("where",$value)){
-                // We will use $i to see if we are at the first condition so set it to 0
-                    $i = 0;
-
-                    // Loop through the array
-                    //nicePrint_r($value['where'], $title = '$value[where]');
-                    foreach($value['where'] as $key => $value){
-                        // If we have more than one condition, prefix each one (after the first) with 'AND'
-                        $preSql = ($this->where) ? ' AND ' : ' WHERE ';
-                        // Depending on the operator, we need to structure the WHERE clause slightly differently
-                        switch($value[0]) {
-                            case '>':
-                            case '<':
-                            case '=':
-                            case 'LIKE':
-                                $this->whereElementStandard ($preSql, $key, $value);
-                                break;
-
-                            case 'IN':
-                                $this->whereElementIn ($preSql, $key, $value); 
-                                break;
-
-                            case 'BETWEEN':
-                                $this->whereElementBetween ($preSql, $key, $value); 
-                                break;
-
-                            default:
-                                $this->whereElementStandard ($preSql, $key, $value);
-                                break;
-                        } // End switch
-
-                        // Increment the counter
-                        $i++;
-                       $this->where = true;     
-                    } // End foreach
-
-                    
-            }
-             //nicePrint_r($value, $title = 'tablesvalue');
-           //  nicePrint_r($value['where'], $title = 'tablesvalue[where]');
-        }
-
-        if($this->where) {
-            echo 'WHERE';
-        }
-    
-     //nicePrint_r($tables, $title = 'tables');  
-/*
-        foreach ($tables as $key => $value1) {
-            echo '<h3>'.$key.'</h2>';
-            $this->table = $key;
-            
-            nicePrint_r($value1, $title = 'tablesvalue');
-            if(array_key_exists("where",$value1)){
-                  //  echo 'Has Where';
-
-                    $this->_sql .= ' WHERE ';
-
-                    // We will use $i to see if we are at the first condition so set it to 0
-                    $i = 0;
-
-                    // Loop through the array
-                    nicePrint_r($value1['where'], $title = '$value[where]');
-                    foreach($value1['where'] as $key => $value){
-                        // If we have more than one condition, prefix each one (after the first) with 'AND'
-                        $preSql = ($i > 0) ? ' AND ' : '';
-                        // Depending on the operator, we need to structure the WHERE clause slightly differently
-                        switch($value[0]) {
-                            case '>':
-                            case '<':
-                            case '=':
-                            case 'LIKE':
-                                $this->whereElementStandard ($preSql, $key, $value);
-                                break;
-
-                            case 'IN':
-                                $this->whereElementIn ($preSql, $key, $value); 
-                                break;
-
-                            case 'BETWEEN':
-                                $this->whereElementBetween ($preSql, $key, $value); 
-                                break;
-
-                            default:
-                                $this->whereElementStandard ($preSql, $key, $value);
-                                break;
-                        } // End switch
-
-                        // Increment the counter
-                        $i++;
-                            
-                    } // End foreach
-
-                    
-            }
-            return $this->_sql;
-        }
-
-   */
-    } // whereClause ()
-
+  
+    /** Create the order clause for the SQL statement
+     *
+     *  Builds the order clause for the SQL statement from an array of arrays.
+     *
+     *  $conditions        An array of conditions passed in from buildQuery()
+     *  
+     *  We are using the 'ORDER' key from the array the get 'ORDER BY' parameters
+     *
+    **/
     private function orderClause ($conditions) {
 
-        /** Notes for multiple order clause
-         *
-         *  Can work the same as the foreach/preSql in the where
-         *
-         *  Need to decide whether to array the elements
-         *  ('Name', 'ASC')
-         *  
-         *  Or just write them as a whole
-         *  Name ASC
-         *
-        **/
-
-
-
-
+        // We only do anything if the 'ORDER' key exists in the array
         if(array_key_exists("ORDER",$conditions)){
-            // Continue the query with an 'ORDER BY'
+            // The 'ORDER' key exists in the array so continue the SQL statement with an 'ORDER BY'
             $this->_sql .= ' ORDER BY ';
 
             // We will use $i to see if we are at the first condition so set it to 0
@@ -341,11 +485,16 @@ class DB {
 
             foreach($conditions['ORDER'] as $value){
 
-                // If we have more than one condition, prefix each one (after the first) with ', '
+                // If we have more than one condition, prefix each one (after the //first) with ', '
                 $this->_sql .= ($i > 0) ? ', ' : '';
 
                 // Add the ORDER BY condition
-                $this->_sql .= $value;
+                // [0] = table
+                // [1] = column
+                // [2] = direction
+                //
+                // Work on this once table aliases are avaiable
+                $this->_sql .= '`'.$value[0].'`.`'.$value[1].'` '.$value[2];
 
                 // Increment the counter
                 $i++;
@@ -353,47 +502,33 @@ class DB {
         } // End array_key_exists
     } // orderClause ()
 
+
+    /** Create the limit clause for the SQL statement
+     *
+     *  Builds the limit clause for the SQL statement from an array.
+     *
+     *  $conditions        An array of conditions passed in from buildQuery()
+     *  
+     *  We are using the 'LIMIT' key from the array the get 'ORDER BY' parameters
+     *
+    **/
     private function limitClause ($conditions) {
+
+        // We only do anything if the 'LIMIT' key exists in the array
         if (array_key_exists("LIMIT",$conditions)) {
-            // Continue the query with a 'LIMIT'
+
+            // The 'LIMIT' key exists in the array so continue the SQL statement with an 'LIMIT'
             $this->_sql .= ' LIMIT ';
+
+            // If a start position has been specified add it to the SQL statement followed by a comma
             $this->_sql .= (array_key_exists("START",$conditions)) ? $conditions['START'].',' : '';
+
+            // Add the limit number to the SQL statement
             $this->_sql .= $conditions['LIMIT'];
 
-        }
+         }
     } // limitClause ()
 
-    /** tableAction()
-        Sets the correct action for the table in the query
-
-        $method is the type of query (SELECT, INSERT, UPDATE, DELETE)
-    */
-    private function tableAction ($method) {
-        // Note : 'SELECT' currrently selects all (*) but will look at selecting columns at a later date
-            switch ($method) {
-                case 'SELECT':
-                    $data = '* FROM ';
-                    break;
-                
-                case 'INSERT':
-                    $data = 'INTO ';
-                    break;
-                
-                case 'UPDATE':
-                    $data = '';
-                    break;
-                
-                case 'DELETE':
-                    $data = 'FROM ';
-                    break;
-                
-                default:
-                    $data = '* FROM ';
-                    break;
-            }
-
-            return $data;
-    }
 
 
     /**  WHERE ELEMENT FUNCTIONS
@@ -416,12 +551,15 @@ class DB {
         Used by BETWEEN
         Example : `id` BETWEEN ? AND ?
     */
-    private function whereElementStandard ($preSql, $key, $value) {
-        $this->_sql .= $preSql . '`'.$this->table.'`'.'.'.'`'.$key .'`'. ' ' . $value[0]. ' ?';
-        $this->_bindArray[] .= $value[1];
-    }
 
-    private function whereElementIn ($preSql, $key, $value) {
+    private function whereElementStandard ($key, $value) {
+        
+        $this->_bindArray[] .= $value[1];
+
+        return '`'.$this->table.'`'.'.'.'`'.$key .'`'. ' ' . $value[0]. ' ?';
+    } // whereElementStandard ()
+
+    private function whereElementIn ($key, $value) {
         $x = 1;
         $fields = '';
         $valueArray = $value[1];
@@ -432,57 +570,21 @@ class DB {
             $x++;
         }
 
-        $this->_sql .= $preSql . '`'.$this->table.'`'.'.'.'`'.$key .'`' . ' ' . $value[0]. ' ('.$fields.')';
-    }
+     return '`'.$this->table.'`'.'.'.'`'.$key .'`' . ' ' . $value[0]. ' ('.$fields.')';
+    } // whereElementIn ()
 
-    private function whereElementBetween ($preSql, $key, $value) {
+    private function whereElementBetween ($key, $value) {
         $x = 1;
         $fields = '';
         $valueArray = $value[1];
+
         foreach($valueArray as $field => $newbindValue) {
-            $this->_bindArray[] .= $newbindValue;
+            $this->_bindArray[] .= $newbindValue; 
         }
 
-        $this->_sql .= $preSql . '`'.$this->table.'`'.'.'.'`'.$key .'`' . ' ' . $value[0].  ' ? AND ?';
-      
+        return '`'.$this->table.'`'.'.'.'`'.$key .'`' . ' ' . $value[0].  ' ? AND ?';
 
-    }
-
-
-
-    /** CORE FUNCTIONS
-
-        select()
-        delete()
-        insert()
-        update()
-
-        Runs a query with the desired method
-
-        $table is the table to run the query on
-        $conditions is an array of any other parameters for the query (WHERE, ORDER BY, LIMIT and START)
-    */
-    public function select ($table, $conditions = array()) {
-        
-        return $this->crud('SELECT', $table, $conditions);        
-    }
-
-    public function delete ($table, $conditions = array()) {
-        
-        return $this->crud('DELETE', $table, $conditions);
-    }
-
-    public function insert ($table, $conditions = array()) {
-        
-        return $this->crud('INSERT', $table, $conditions);
-    }
-
-    public function update ($table, $conditions = array()) {
-        
-        return $this->crud('UPDATE', $table, $conditions);
-    }
-
-
+    } // whereElementBetween ()
 
 
 
@@ -540,7 +642,7 @@ class DB {
         }
 
         return $results;
-    }
+    } // getRows()
 
 
 
@@ -552,7 +654,7 @@ class DB {
     public function insertId () {
 
         return $this->_lastInsertId;
-    }
+    } // insertId ()
 
     // ==================================================================
     //  Return a count of the query
@@ -560,28 +662,26 @@ class DB {
     public function count () {
 
         return $this->_count;
-    }
+    } // count ()
 
     // ==================================================================
     //  Return any errors
     public function error () {
 
         return $this->_error;
-    }
-
+    } // error ()
 
 
     // Only used for debugging
     public function sql () {
 
         return $this->_sql;
-    }
+    } // sql ()
 
     public function bindValue () {
-
+       
         return $this->_bindArray;
-    }
-
+    } // bindValue ()
 
 
 }

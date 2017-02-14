@@ -50,6 +50,17 @@ $db = DB::dbConnect();
 $query_select = $db->select(
     $tables = array(
         'city'=> array(
+            'fields' => array (
+                'Name' => array (
+
+                ),
+                'Population' => array (
+
+                ),
+                'District' => array (
+
+                ),
+            ),
             'where' => array (
                 'District' => array("LIKE", 'A%'),
                 'Population' => array("BETWEEN", array('100000','500000'))
@@ -57,29 +68,38 @@ $query_select = $db->select(
             )
         ), 
         'country'=> array(
+            'fields' => array (
+                'Code' => array (
+
+                ),
+                'Region' => array (
+
+                ),
+            ),
             'join' => array (
                 'join_type' => 'LEFT',
                 'foreign_table' => 'city',
                 'foreign_key' => 'CountryCode',
                 'local_key' => 'Code',
-                ),
+            ),
             'where' => array (
                 'Code' => array("IN", array('USA','ARG','IND','JPN'))
                 
             )
         ), 
 
-        ),
-    array(
+    ),
+    $conditions = array(
         'ORDER'=>array(
-            'country.LifeExpectancy DESC', 
-            'city.Population DESC'
+            array('city','District','ASC'),
+            array('city','Population','DESC')
         ),
-        'LIMIT'=> 10
+        'LIMIT'=> 10,
+        'START'=> 2
     )
 );
 
-
+showData ($query_select);
 ?>
 <h4>Result</h4>
 
@@ -91,7 +111,7 @@ $query_select = $db->select(
 
     <thead>
     <?php
-     nicePrint_r($query_select);
+     
 foreach ($query_select->getRows('one') as $key=> $value) {
    
             echo "<th>".escape($key)."</th>";
