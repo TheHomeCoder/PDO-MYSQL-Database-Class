@@ -232,8 +232,9 @@ class DB {
         // 'fields', 'where' and 'joins' arrays for the table.
         foreach ($tables as $key => $value) {
 
+      
             // Set the table to $this->table as we will be using this in several nested functions
-            $this->table = $key;
+            $this->table = ($value['alias']) ? $value['alias'] : $key;
 
             // Create the required fields part of the SQL statement and add it to $this->show_fields
             $this->show_fields = $this->buildFields ($value['fields']);
@@ -263,11 +264,11 @@ class DB {
         // Simply switch the $action variable for the correct type of action
         switch ($action) {
             case 'SELECT':
-                $data = ' FROM ';
+                $data = ' FROM';
                 break;
             
             case 'INSERT':
-                $data = 'INTO ';
+                $data = ' INTO';
                 break;
             
             case 'UPDATE':
@@ -275,11 +276,11 @@ class DB {
                 break;
             
             case 'DELETE':
-                $data = 'FROM ';
+                $data = ' FROM';
                 break;
             
             default:
-                $data = ' FROM ';
+                $data = ' FROM';
                 break;
         } // End switch statement
 
@@ -313,8 +314,15 @@ class DB {
             // arrays for that column such as 'alias' and 'count'
             foreach ($array as $key => $value) {
 
+               // print_r($value);
+
+                $this->alias = (isset($value['alias'])) ? ' ' . $value['alias'] : '';
+
+        
+               // $this->table = ($value['alias']) ? $value['alias'] : $key;
+
                 // Create the `table`.`column` pair and add it to the $this->fields_output array
-                $this->fields_output[] .= '`'.$this->table.'`'.'.'.'`'.$key.'`';
+                $this->fields_output[] .= '`'.$this->table.'`'.'.'.'`'.$key.'`' . $this->alias;
                    
             } // End foreach
 
@@ -375,13 +383,16 @@ class DB {
 
             // Prepend the join type (LEFT, RIGHT etc) to the word 'JOIN'
 
+            $this->alias = ($value['alias']) ? $value['alias'] . ' ' : '';
+            $this->join_name = ($value['alias']) ? $value['alias']: $key;
+
             if(isset($value['join'])) {
                 $joinType = $value['join']['join_type'] . ' JOIN';
-                $joinOn = 'ON ' . $key.'.'.$value['join']['local_key'] . ' = ' . $value['join']['foreign_table'].'.'.$value['join']['foreign_key'];
+                $joinOn = 'ON `' . $this->join_name.'`.`'.$value['join']['local_key'] . '` = `' . $value['join']['foreign_table'].'`.`'.$value['join']['foreign_key'] .'`';
             } // if join
            
             // Wrap the table name ($key) with the join parts. The join parts will be empty strings if no join was set
-            $out .= $joinType.' `' . $key . '` '.$joinOn;
+            $out .= $joinType.' `' . $key . '` ' .$this->alias.$joinOn;
 
         } // foreach
 
@@ -438,6 +449,10 @@ class DB {
 
                     case 'BETWEEN':
                         $this->where = $this->whereElementBetween ($key, $value); 
+                        break;
+                    case 'NULL':
+                    case 'NOT NULL':
+                        $this->where = $this->whereElementNull ($key, $value); 
                         break;
 
                     default:
@@ -521,10 +536,10 @@ class DB {
             $this->_sql .= ' LIMIT ';
 
             // If a start position has been specified add it to the SQL statement followed by a comma
-            $this->_sql .= (array_key_exists("START",$conditions)) ? $conditions['START'].',' : '';
+            $this->_sql .= (isset($conditions['LIMIT'][1])) ? $conditions['LIMIT'][1].',' : '';
 
             // Add the limit number to the SQL statement
-            $this->_sql .= $conditions['LIMIT'];
+            $this->_sql .= $conditions['LIMIT'][0];
 
          }
     } // limitClause ()
@@ -549,6 +564,10 @@ class DB {
 
         whereElementIn()
         Used by BETWEEN
+        Example : `id` BETWEEN ? AND ?
+
+        whereElementNull()
+        Used by IS NULL, IS NOT NULL
         Example : `id` BETWEEN ? AND ?
     */
 
@@ -585,6 +604,13 @@ class DB {
         return '`'.$this->table.'`'.'.'.'`'.$key .'`' . ' ' . $value[0].  ' ? AND ?';
 
     } // whereElementBetween ()
+
+    private function whereElementNull ($key, $value) {
+        
+        // It does not appear possible to bind IS NULL and IS NOT NULL so add them as they are
+
+        return '`'.$this->table.'`'.'.'.'`'.$key .'`'. ' IS ' .$value[0];
+    } // whereElementStandard ()
 
 
 

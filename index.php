@@ -24,18 +24,47 @@ $db = DB::dbConnect();
 
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-
-    <title>Database Class</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-  <link rel="stylesheet" href="style.css">
-
-
+   <?php include 'src/template/head.php'; ?>
+   <title>Database Class</title>
 </head>
 
 <body>
 
-<h1>PDO Database CRUD Class</h1>
+<div id="jumbo" class="jumbotron">
+    <div class="container">
+        <img src="homecoderstrip200.png">
+        <h1>
+          Welcome to Jetstrap!
+        </h1>
+        <p>
+          This is the Jetstrap demo. Feel free to play around with it!
+        </p>
+        <p>
+          Try dragging new Bootstrap 3 components from the left side    onto this page.
+        </p>
+        <p>
+          When you are ready to try the real thing, click Sign up   above!
+        </p>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="container">
+                <?php include 'src/template/nav.php'; ?>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container">
+    
+    <div class="row">
+        <div class="col-md-2">
+            <?php include 'src/template/left.php'; ?>
+        </div>
+        <div class="col-md1 col-md-10"">
+            <div class="page-header">
+                <h1>PDO Database CRUD Class</h1>
+            </div>
+
 <p class="lead">An Object Orientated database class for connection, read, write, create and delete</p>
 
 <h2 id="examples">Examples</h2>
@@ -210,6 +239,15 @@ The available conditions are
         </li>
     </ul>
 </p>
+        </div>
+      </div>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
+      </script>
+      <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js">
+      </script>
+      
+    </div>
+    <?php include 'src/template/footer.php'; ?>
 
 </body>
 </html>

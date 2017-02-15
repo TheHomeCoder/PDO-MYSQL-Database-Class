@@ -24,16 +24,41 @@ $db = DB::dbConnect();
 
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-
+    <?php include 'src/template/head.php'; ?>
     <title>Database Class | Select Multiple Tables Example</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<h1>Database Class | Select Multiple Tables Example</h1>
+<div id="jumbo" class="jumbotron">
+    <div class="container">
+        <img src="homecoderstrip200.png">
+        <h1>
+          PDO Database Class
+        </h1>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="container">
+                <?php include 'src/template/nav.php'; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    
+    <div class="row">
+        <div class="col-md-2">
+            <?php include 'src/template/left.php'; ?>
+        </div>
+        <div class="col-md1 col-md-10"">
+            <div class="page-header">
+                <h1>Database Class | Select Multiple Tables Example</h1>
+            </div>
+
+
+
 <p class="lead">
     xx
 </p>
@@ -50,24 +75,26 @@ $db = DB::dbConnect();
 $query_select = $db->select(
     $tables = array(
         'city'=> array(
+            'alias' => 'CIT',
             'fields' => array (
                 'Name' => array (
-
+                    'alias' => 'city_name',
                 ),
                 'Population' => array (
-
+                    'alias' => 'pop',
                 ),
                 'District' => array (
 
                 ),
             ),
             'where' => array (
-                'District' => array("LIKE", 'A%'),
-                'Population' => array("BETWEEN", array('100000','500000'))
+                //'District' => array("LIKE", 'A%'),
+                //'Population' => array("BETWEEN", array('100000','500000'))
                 
             )
         ), 
         'country'=> array(
+            'alias' => 'COUN',
             'fields' => array (
                 'Code' => array (
 
@@ -75,15 +102,22 @@ $query_select = $db->select(
                 'Region' => array (
 
                 ),
+                'Name' => array (
+                    'alias' => 'country_name',
+                ),
+                'IndepYear' => array (
+                    'alias' => 'year_of_ind',
+                ),
             ),
             'join' => array (
                 'join_type' => 'LEFT',
-                'foreign_table' => 'city',
+                'foreign_table' => 'CIT', // Mention alias or table
                 'foreign_key' => 'CountryCode',
                 'local_key' => 'Code',
             ),
             'where' => array (
-                'Code' => array("IN", array('USA','ARG','IND','JPN'))
+                //'Code' => array("IN", array('USA','ARG','IND','JPN')),
+                'IndepYear' => array("NULL")
                 
             )
         ), 
@@ -91,11 +125,10 @@ $query_select = $db->select(
     ),
     $conditions = array(
         'ORDER'=>array(
-            array('city','District','ASC'),
-            array('city','Population','DESC')
+            array('CIT','District','ASC'),
+            array('CIT','Population','DESC')
         ),
-        'LIMIT'=> 10,
-        'START'=> 2
+        'LIMIT'=>array(10, 2)
     )
 );
 
@@ -268,6 +301,16 @@ $query_select = $db->select(
 <?php // Show the generated SQL and bindings. Function in /src/functions/php
 showData ($query_select); ?>
 
+
+        </div>
+      </div>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
+      </script>
+      <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js">
+      </script>
+      
+    </div>
+    <?php include 'src/template/footer.php'; ?>
 
 </body>
 </html>

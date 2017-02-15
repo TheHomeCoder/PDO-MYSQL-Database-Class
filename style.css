@@ -5,5 +5,42 @@
 **
 **------------------------------------------------------------------------------ */
 body {
-    padding: 15px;
+    
 }
+
+.navbar {
+    margin-bottom: 0px;
+    border-width: 0px;
+}
+
+@media screen and (min-width: 768px) {
+    .jumbotron {
+        padding-bottom: 0px;
+    }
+}
+
+.footer {
+    background-color: #222222;
+    color: #b1afaf;
+    margin-top: 25px;
+}
+
+#jumbo {
+    background-color: #333;
+    color: #eee;
+}
+#jumbo p {
+    font-size: 16px;
+}
+#try-header {
+    margin: 30px 0px;
+}
+#try-more {
+    margin: 30px 0px;
+    font-style: italic;
+}
+
+.page-header, .page-header h1 {
+    margin-top: 0;
+}
+

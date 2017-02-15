@@ -28,6 +28,10 @@ function showData ($qry) {
     
     echo $qry->sql();
     echo '</pre>';
+    echo '<pre>';
+    
+    echo print_r($qry);
+    echo '</pre>';
     if($qry->bindValue ()) {
         echo '<h4>Bindings</h4>';
         echo '<pre>';
