@@ -24,16 +24,40 @@ $db = DB::dbConnect();
 
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-
+    <?php include 'src/template/head.php'; ?>
     <title>Database Class | Delete Example</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link rel="stylesheet" href="style.css">
+    
 </head>
 
 <body>
 
-<h1>Database Class | Delete Example</h1>
+<div id="jumbo" class="jumbotron">
+    <div class="container">
+        <img src="homecoderstrip200.png">
+        <h1>
+          PDO Database Class
+        </h1>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="container">
+                <?php include 'src/template/nav.php'; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    
+    <div class="row">
+        <div class="col-md-3">
+            <?php include 'src/template/left.php'; ?>
+        </div>
+        <div class="col-md-9">
+            <div class="page-header">
+                <h1>Database Class | Delete Example</h1>
+            </div>
+
 <p class="lead">
     Delete records in the 'city' table where
     <ul>
@@ -53,11 +77,12 @@ $db = DB::dbConnect();
  *  the parameters and assign the resultant array to $query_delete
 **/
 $query_delete = $db->delete(
-    'city',
-    array(
-        'WHERE'=>array(
-            'Name' => array("LIKE", '%a'), 
-            'Population' => array(">", '1000'),
+     $tables = array(
+        'city'=> array(
+            'where'=>array(
+                'Name' => array("LIKE", 'a%'), 
+                'Population' => array(">", '1000'),
+            )
         )
     )
 );
@@ -89,6 +114,17 @@ $query_delete = $db->delete(
 <?php // Show the generated SQL and bindings. Function in /src/functions/php
 showData ($query_delete); ?>
 
+  </div>
+      </div>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
+      </script>
+      <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js">
+      </script>
+      
+    </div>
+    <?php include 'src/template/footer.php'; ?>
+
 </body>
 </html>
+
 

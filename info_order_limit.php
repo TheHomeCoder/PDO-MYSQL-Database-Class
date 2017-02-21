@@ -49,10 +49,10 @@ $db = DB::dbConnect();
 <div class="container">
     
     <div class="row">
-        <div class="col-md-2">
+        <div class="col-md-3">
             <?php include 'src/template/left.php'; ?>
         </div>
-        <div class="col-md1 col-md-10"">
+        <div class="col-md-9">
             <div class="page-header">
                 <h1>Database Class | ORDER BY and LIMIT</h1>
             </div>

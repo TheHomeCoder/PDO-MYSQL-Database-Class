@@ -24,16 +24,40 @@ $db = DB::dbConnect();
 
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-
-    <title>Database Class | Select Example</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <link rel="stylesheet" href="style.css">
+    <?php include 'src/template/head.php'; ?>
+    <title>Database Class | Insert Example</title>
 </head>
 
 <body>
 
-<h1>Database Class | Insert Example</h1>
+<div id="jumbo" class="jumbotron">
+    <div class="container">
+        <img src="homecoderstrip200.png">
+        <h1>
+          PDO Database Class
+        </h1>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="container">
+                <?php include 'src/template/nav.php'; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    
+    <div class="row">
+        <div class="col-md-3">
+            <?php include 'src/template/left.php'; ?>
+        </div>
+        <div class="col-md-9">
+            <div class="page-header">
+                <h1>Database Class | Insert Example</h1>
+            </div>
+
+
 <p class="lead">
     Insert into the 'city' table a record with....
     <ul>
@@ -50,12 +74,15 @@ $db = DB::dbConnect();
  *  Using the insert() function in the Database class ($db) pass in 
  *  the parameters and assign the resultant array to $query_insert
 **/
-$query_insert = $db->insert('city',
-    array('FIELDS'=>array(
-        'Name' => 'Test Name' ,
-        'Population' => "9999", 
-        'District' => "Disty", 
-        'CountryCode' => 'PSE'
+$query_insert = $db->insert(
+    $tables = array(
+        'city'=> array(
+            'fields'=>array(
+                'Name' => 'Test Name' ,
+                'Population' => "9999", 
+                'District' => "Disty", 
+                'CountryCode' => 'PSE'
+            )
         )
     )
 );
@@ -91,6 +118,15 @@ $query_insert = $db->insert(
 
 <?php // Show the generated SQL and bindings. Function in /src/functions/php
 showData ($query_insert); ?>
+  </div>
+      </div>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
+      </script>
+      <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js">
+      </script>
+      
+    </div>
+    <?php include 'src/template/footer.php'; ?>
 
 </body>
 </html>

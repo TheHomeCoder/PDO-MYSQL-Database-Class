@@ -25,7 +25,7 @@ $db = DB::dbConnect();
 <html lang="en">
 <head>
     <?php include 'src/template/head.php'; ?>
-    <title>Database Class | Select Multiple Tables Example</title>
+    <title>Database Class | Simple Select Example</title>
 </head>
 
 <body>
@@ -54,7 +54,7 @@ $db = DB::dbConnect();
         </div>
         <div class="col-md-9">
             <div class="page-header">
-                <h1>Database Class | Select Multiple Tables Example</h1>
+                <h1>Database Class | Simple Select Example</h1>
             </div>
 
 
@@ -93,35 +93,6 @@ $query_select = $db->select(
                 
             )
         ), 
-        'country'=> array(
-
-            'fields' => array (
-                'Code' => array (
-
-                ),
-                'Region' => array (
-
-                ),
-                'Name' => array (
-                    'alias' => 'country_name',
-                ),
-                'IndepYear' => array (
-                    'alias' => 'year_of_ind',
-                ),
-            ),
-            'join' => array (
-                'join_type' => 'LEFT',
-                'foreign_table' => 'CIT', // Mention alias or table
-                'foreign_key' => 'CountryCode',
-                'local_key' => 'Code',
-            ),
-            'where' => array (
-                //'Code' => array("IN", array('USA','ARG','IND','JPN')),
-                'IndepYear' => array("NULL")
-                
-            )
-        ), 
-
     ),
     $conditions = array(
         'ORDER'=>array(
