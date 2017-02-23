@@ -89,7 +89,7 @@ $query_select = $db->select(
             ),
             'where' => array (
                 //'District' => array("LIKE", 'A%'),
-                //'Population' => array("BETWEEN", array('100000','500000'))
+                'Population' => array("BETWEEN", array('100000','500000'))
                 
             )
         ), 

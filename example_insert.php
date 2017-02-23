@@ -78,10 +78,10 @@ $query_insert = $db->insert(
     $tables = array(
         'city'=> array(
             'fields'=>array(
-                'Name' => 'Test Name' ,
-                'Population' => "9999", 
-                'District' => "Disty", 
-                'CountryCode' => 'PSE'
+                'Name' => 'Test bName' ,
+                'Population' => "99899", 
+                'District' => "Disbty", 
+                'CountryCode' => 'ZWE'
             )
         )
     )
