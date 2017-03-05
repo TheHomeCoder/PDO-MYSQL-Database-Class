@@ -134,7 +134,6 @@ Added instruction files that can be viewed without connecting to the database.
 
 Better formatting and mor information in the examples.
 
-
 ####1.1
 Switched the ORDER BY function into an array
 
