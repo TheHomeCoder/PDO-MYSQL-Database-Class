@@ -1,5 +1,8 @@
           
 <ul class="list-group">
+    <li class="list-group-item">
+        <a href="index.php">Home</a>
+    </li>
     <li class="list-group-item list-group-item-info">
         Examples
     </li>

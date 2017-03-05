@@ -38,13 +38,7 @@ $db = DB::dbConnect();
           PDO Database Class
         </h1>
     </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="container">
-                <?php include 'src/template/nav.php'; ?>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 <div class="container">
@@ -58,71 +52,75 @@ $db = DB::dbConnect();
                 <h1>Database Class | Delete Example</h1>
             </div>
 
-<p class="lead">
-    Delete records in the 'city' table where
-    <ul>
-        <li>Name starts with 'a'</li>
-        <li>Population is more than 1000</li>
-    </ul>
-</p>
-<p class="text-danger">
-    Note that as this performs a specified deleted query on the database, it will only show a number of deleted records the first time as there will be nothing to update. To run it again, either drop the database and re-populate it from world.sql or change the value of 'Name' in this file to something other than 'a' (do not forget to leave the % if you are still using a 'LIKE' parameter.
-    
-</p>
+            <p class="lead">
+                Delete records in the 'city' table where
+                <ul>
+                    <li>Name starts with 'a'</li>
+                    <li>Population is more than 1000</li>
+                </ul>
+            </p>
+            <p class="text-danger">
+                Note that as this performs a specified deleted query on the database, it will only show a number of deleted records the first time as there will be nothing to update. To run it again, either drop the database and re-populate it from world.sql or change the value of 'Name' in this file to something other than 'a' (do not forget to leave the % if you are still using a 'LIKE' parameter.
+                
+            </p>
 
-<?php 
-/** Delete the records from the table
- *
- *  Using the delete() function in the Database class ($db) pass in 
- *  the parameters and assign the resultant array to $query_delete
-**/
-$query_delete = $db->delete(
-     $tables = array(
-        'city'=> array(
-            'where'=>array(
-                'Name' => array("LIKE", 'a%'), 
-                'Population' => array(">", '1000'),
-            )
-        )
-    )
-);
+            <?php 
+            /** Delete the records from the table
+             *
+             *  Using the delete() function in the Database class ($db) pass in 
+             *  the parameters and assign the resultant array to $query_delete
+            **/
+            $query_delete = $db->delete(
+                 $tables = array(
+                    'city'=> array(
+                        'where'=>array(
+                            'Name' => array("LIKE", 'd%'), 
+                            'Population' => array(">", '1000'),
+                        )
+                    )
+                )
+            );
 
-?>
+            ?>
 
-<h4>Result</h4>
+            <h4>Entered Array</h4>
 
-<?php
-// Shown an example of using the count() function from './src/class/DB.php'
-echo $query_delete->count() .' rows deleted<br>';
+            <!-- Echo out the $query_select array to the screen using <pre> tags for formatting -->
+            <pre>
+            $query_delete = $db->delete(
+                 $tables = array(
+                    'city'=> array(
+                        'where'=>array(
+                            'Name' => array("LIKE", 'd%'), 
+                            'Population' => array(">", '1000'),
+                        )
+                    )
+                )
+            );
+            </pre>
 
-?>
-<h4>Entered Array</h4>
+            <?php // Show the generated SQL and bindings. Function in /src/functions/php
+            showData ($query_delete); ?>
 
-<!-- Echo out the $query_delete array to the screen using <pre> tags for formatting -->
-<pre>
-$query_delete = $db->delete(
-    'city',
-    array(
-        'WHERE'=>array(
-            'Name' => array("LIKE", '%a'), 
-            'Population' => array(">", '1000'),
-        )
-    )
-);
-</pre>
+            <h4>Returning records</h4>
+            <p>
+                We return the number of records deleted using <code>$query_delete->count ()</code>.
+            </p>
 
-<?php // Show the generated SQL and bindings. Function in /src/functions/php
-showData ($query_delete); ?>
+            <h4>Result</h4>
 
-  </div>
-      </div>
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
-      </script>
-      <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js">
-      </script>
-      
+            <?php
+            // Shown an example of using the count() function from './src/class/DB.php'
+            echo $query_delete->count() .' rows deleted<br>';
+
+            ?>
+        </div>
     </div>
-    <?php include 'src/template/footer.php'; ?>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+      
+</div>
+<?php include 'src/template/footer.php'; ?>
 
 </body>
 </html>

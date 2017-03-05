@@ -10,13 +10,6 @@ require_once 'src/config.php';
 **/
 // ini_set('display_errors', 'ON');
 
-/**
-* Connect to the database and assign it to a variable called $db
-* When communicating with the database, we can now use $db->
-**/
-$db = DB::dbConnect();
-
-
 ?>
 
 
@@ -37,13 +30,7 @@ $db = DB::dbConnect();
           PDO Database Class
         </h1>
     </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="container">
-                <?php include 'src/template/nav.php'; ?>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 <div class="container">

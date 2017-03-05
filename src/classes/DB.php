@@ -137,104 +137,85 @@ class DB {
         $this->_bindArray = array();
 
        
+        // Collect the fields, tables and joins, and where clauses
+        $this->buildQuery ($tables, $action);
 
+
+        // Start building the query by adding the method (SELECT, DELETE, INSERT, UPDATE) to the start of the SQL statement
+        $this->_sql = $action ;
+
+        // Each different method has a slightly different make up so we continue the build seperately
         if ($action == 'SELECT') {
-             // Collect the fields, tables and joins, and where clauses
-            $this->buildQuery ($tables, $action);
-
-
-            // Start building the query by adding the method (SELECT, DELETE, INSERT, UPDATE) to the start of the SQL statement
-            $this->_sql = $action ;
-
-
+            
+            // Next up on a SELECT is the fields or * if none have been set
             $this->_sql .= ($this->fields_exists) ? $this->show_fields : ' *';
+
+            // Build the table part of the SQL statement
             $this->_sql .= $this->show_tables;
+
+            // Add the WHERE clause
             $this->_sql .= $this->show_where;
+
+            // Add the ORDER clause
             $this->orderClause ($conditions);
+
+            // Add the LIMIT BY cause
             $this->limitClause ($conditions);
-            $this->runQuery ();
         } 
 
+
         if ($action == 'INSERT') {
-            // Collect the fields, tables and joins, and where clauses
-            $this->buildQuery ($tables, $action);
 
-            // Start building the query by adding the method (SELECT, DELETE, INSERT, UPDATE) to the start of the SQL statement
-            $this->_sql = $action ;
-
+       
+            // Next up on an INSERT is the table
             $this->_sql .= $this->show_tables;
 
+            // Then we set the fields
             $this->_sql .= $this->show_fields;
-            $this->runQuery ();
-            $this->_lastInsertId = $this->_pdo->lastInsertId();
-
-
         }
 
 
         if ($action == 'DELETE') {
-            // Collect the fields, tables and joins, and where clauses
-            $this->buildQuery ($tables, $action);
-            $this->_sql = $action ;
+       
+            // Next up on a DELETE is the table
             $this->_sql .= $this->show_tables;
+
+            // Then we add the WHERE clause
             $this->_sql .= $this->show_where;
-            $this->runQuery ();
         } 
 
-        // Add all of the parts of the SQL statement to $this->_sql 
-
-    
-
-
-       if ($action == 'UPDATE') {
-            // Collect the fields, tables and joins, and where clauses
-            $this->buildQuery ($tables, $action);
-
-            // Start building the query by adding the method (SELECT, DELETE, INSERT, UPDATE) to the start of the SQL statement
-            $this->_sql = $action ;
-
+      
+        if ($action == 'UPDATE') {
+       
+            // Next up on an UPDATE is the table
             $this->_sql .= $this->show_tables;
 
+            // Then we set the fields
             $this->_sql .= $this->show_fields;
 
+            // Then we add the WHERE clause
             $this->_sql .= $this->show_where;
-            
-            $this->runQuery ();
-       
+        }
 
+
+        // Now that the SQL statement is built, we run the query
+        $this->runQuery ();
+
+
+        // If the query has been an INSERT, set the $this->_lastInsertId
+        if ($action == 'INSERT') {
+
+            $this->_lastInsertId = $this->_pdo->lastInsertId();
 
         }
 
 
-
-  
-        
-        
-
-        if ($action == 'UPDdddATE') {
-            if(array_key_exists("FIELDS",$conditions)){
-                 
-                $keys = array_keys($conditions['FIELDS']);
-                $values = '';
-
-                $x = 1;
-                foreach($conditions['FIELDS'] as $key => $value) {
-                    $values .= ($x > 1) ? ', ' : '';
-                    $values .= $key . '=?';
-                    $x++;
-                    $this->_bindArray[] .= $value;
-                }
-
-                $this->_sql .= 'SET ' . $values;
-
-                $this->whereClause ($conditions);
-                $this->runQuery ();
-            }
-        } 
-
-
+        // Retutn everything built up in $this
         return $this;
+
     } //function crud ()
+
+
 
     /**  Build the parts of the SQL statement
      *
@@ -247,11 +228,10 @@ class DB {
         // All of the selected fields for the query get placed in an array so create it
         $this->fields_output = array();
 
-         $this->fields_exists = false;
+        // We use $this->fields_exists elsewhere to make decisions so default it to false
+        $this->fields_exists = false;
 
         
-       
-
         // Loop through all the tables where the $key will be the table name and the $value will be the 
         // 'fields', 'where' and 'joins' arrays for the table.
         foreach ($tables as $key => $value) {
@@ -261,17 +241,9 @@ class DB {
             $this->table = (isset($value['alias'])) ? $value['alias'] : $key;
 
 
-            if ($action == 'INSERT') {
+            // There different build orders depending on the method so we continue the build seperately
+            if ($action == 'INSERT' || $action == 'UPDATE') {
                 
-                // Create the tables and joooins part of the SQL statement and add it to $this->show_fields
-                $this->show_tables = $this->buildTables ($tables, $action);
-
-                // Create the required fields part of the SQL statement and add it to $this->show_fields
-                $this->show_fields = $this->buildFields (isset($value['fields']) ? $value['fields'] : '', $action) ;
-
-
-            } else if ($action == 'UPDATE') {
-
                 // Create the tables and joooins part of the SQL statement and add it to $this->show_fields
                 $this->show_tables = $this->buildTables ($tables, $action);
 
@@ -286,8 +258,6 @@ class DB {
                 // Create the tables and joooins part of the SQL statement and add it to $this->show_fields
                 $this->show_tables = $this->buildTables ($tables, $action);
             }
-            
-
             
 
             // Call the buildWhere () function to build up the $this->show_where variable
@@ -317,87 +287,96 @@ class DB {
     **/
     private function buildFields ($array, $action) {
 
-        if ($action == 'SELECT') {
-                    // Only do anything if the array contains anything
+        // As we do not always specifiy fields, only run if the $array exists
         if($array){
 
-             $this->fields_exists = true;
+            // As the $array exists, set $this->fields_exists to true for reference elsewhere
+            $this->fields_exists = true;
+
+            // We only use fields on SELECT, INSERT and UPDATE and each works differently so build them seperately
+            if ($action == 'SELECT') {
+
+                // Loop through the array where $key is the column name and $value are the 
+                // arrays for that column such as 'alias' and 'count'
+                foreach ($array as $key => $value) {
+
+                  
+                    // Check to see if an alias fir the field has been set
+                    // If so, set the alias to $this->alias
+                    $this->alias = (isset($value['alias'])) ? ' ' . $value['alias'] : '';
+
+
+                    // Create the `table`.`column` pair and appned $this->alias ot it then add it to the $this->fields_output array
+                    $this->fields_output[] .= ' `'.$this->table.'`'.'.'.'`'.$key.'`' . $this->alias;
+                       
+                } // End foreach
             
-            // Loop through the array where $key is the column name and $value are the 
-            // arrays for that column such as 'alias' and 'count'
-            foreach ($array as $key => $value) {
+                // Return  $this->fields_output[] as a comma seperated string
+                return implode($this->fields_output, ',');
+            } 
 
-               // print_r($value);
 
-                $this->alias = (isset($value['alias'])) ? ' ' . $value['alias'] : '';
+            if ($action == 'INSERT') { 
 
-        
-               // $this->table = ($value['alias']) ? $value['alias'] : $key;
+                // We use two arrays, $fields and $values so set them first
+                $fields = array();
+                $values = array();
 
-                // Create the `table`.`column` pair and add it to the $this->fields_output array
-                $this->fields_output[] .= ' `'.$this->table.'`'.'.'.'`'.$key.'`' . $this->alias;
-                   
-            } // End foreach
+                // Loop through the array
+                foreach ($array as $key => $value) {
 
-        } else {
+                    // Add the key to $fields
+                    $fields[] .= '`'.$key.'`';
+
+                    // Add a ? to $values
+                    $values[] .= '?';
+
+                    // Add the value to $this->_bindArray[]
+                    $this->_bindArray[] .= $value;
+
+                }
+
+                // Create the two parts of the INSERT with $out_1 being the fields and $out_2 being the values ('?')
+                $out_1 = '('.implode(', ', $fields).')';
+                $out_2 = '('.implode(', ', $values).')';
+
+                
+                // Return the two parts seperated by ' VALUES '
+                return $out_1 . ' VALUES ' . $out_2;
+            }
+
+
+            if ($action == 'UPDATE') { 
+
+       
+                // With UPDATE we only need a single string so go straight in to the foreach
+                foreach ($array as $key => $value) {
+
+                    // Add the ley followed by '=?' to build up the INSERT string
+                    $this->fields_output[] .= ' `'.$key.'`' . ' = ?';
+
+                    // Add the value to $this->_bindArray[]
+                    $this->_bindArray[] .= $value;
+
+                }
+
+                // Return  $this->fields_output[] as a comma seperated string
+                return implode(',',  $this->fields_output);
+
+            }
+
+
+        } else { // No Array
             
             // The array contains no data so add `table`* to the $this->fields_output array
             $this->fields_output[] .= '`'.$this->table.'`'.'.*';
                 
         } // End if $array
 
-        // If there is anything in the $this->fields_output array, implode it, otherwise just return ' * ' 
-
-
-
-        return implode($this->fields_output, ',');
-        } 
-
-
-        if ($action == 'INSERT') { 
-
-            $fields = array();
-            $values = array();
-
-            foreach ($array as $key => $value) {
-                $fields[] .= '`'.$key.'`';
-                $values[] .= '?';
-                $this->_bindArray[] .= $value;
-
-            }
-
-            $out_1 = '('.implode(', ', $fields).')';
-            $out_2 = '('.implode(', ', $values).')';
-
-            
-
-            return $out_1 . ' VALUES ' . $out_2;
-        }
-
-
-        if ($action == 'UPDATE') { 
-
-
-       
-
-            foreach ($array as $key => $value) {
-                $this->fields_output[] .= ' `'.$key.'`' . ' = ?';
-                $this->_bindArray[] .= $value;
-
-            }
-
-return implode(',',  $this->fields_output);
-
-
-
-
-        }
-        
-
-
-
 
     } // buildFields ()
+
+
 
 
     /**  Build the tables
@@ -415,7 +394,7 @@ return implode(',',  $this->fields_output);
 
     
 
-
+        // Each different method has a slightly different table make up so we continue the build seperately
         if ($action == 'INSERT' || $action == 'DELETE') {
 
             // Before the table, as this is an INSERT or DELETE we need to add 'INTO' or 'FROM' into the SQL Statement
@@ -429,14 +408,10 @@ return implode(',',  $this->fields_output);
             $out .= ' `' . $table[0].'`';
 
         
-        } 
+        } // INSERT || DELETE
 
-
-        
 
         if ($action == 'UPDATE') {
-
-            
 
             // We only have one table with an INSERT and that is a key in the array so we use array_keys 
             // and set it to the variable $table.... 
@@ -445,23 +420,19 @@ return implode(',',  $this->fields_output);
             // ....then we simply use position [0] (the only key) as the table name
             $out = ' `' . $table[0].'`';
 
+            // Add ' SET' t the end of the string
             $out .= ' SET';
 
         
-        } 
+        } // UPDATE
 
 
-
-
-
-        
         if ($action == 'SELECT') {
 
             $out = ' FROM';
             // Loop through all the tables in the array - $ket is the table name
             foreach ($tables as $key => $value) {
 
-
                 // We use two variables the wrap the table name in if it is a joined table so clear them of any old data
                 $joinType = '';
                 $joinOn = '';
@@ -497,73 +468,19 @@ return implode(',',  $this->fields_output);
 
                 // Wrap the table name ($key) with the join parts. The join parts will be empty strings if no join was set
                 $out .= $joinType.' `' . $key . '` ' .$this->alias.$joinOn;
-                }
-
-
-                
-
-                
-
-                
-               
-               
 
             } // foreach
 
-
-            
-        if ($action == 'DELETESSS') {
-            // Loop through all the tables in the array - $ket is the table name
-            foreach ($tables as $key => $value) {
-
-
-                // We use two variables the wrap the table name in if it is a joined table so clear them of any old data
-                $joinType = '';
-                $joinOn = '';
-
-              
-                /**  Create the table joins
-                 *
-                 *  If a join has been specified, create it along with the criteria
-                 *
-                 *  $joinType
-                 *  Prepends the join type (LEFT, RIGHT etc) to the word 'JOIN'
-                 *
-                 *  $joinOn
-                 *  Adds the parameters for the join
-                 *
-                 *  Starts with 'ON ' and then adds the first table.column using 
-                 *  $key.'.'.$value['join']['local_key']
-                 *
-                 *  It the adds ' = ' before adding the second table.column using
-                 *  $value['join']['foreign_table'].'.'.$value['join']['foreign_key']
-                 *
-               **/
-
-                // Prepend the join type (LEFT, RIGHT etc) to the word 'JOIN'
-
-                $this->alias = (isset($value['alias'])) ? $value['alias'] . ' ' : '';
-                $this->join_name = ($this->alias) ? $this->alias: $key;
-
-                if(isset($value['join'])) {
-                    $joinType = $value['join']['join_type'] . ' JOIN';
-                    $joinOn = 'ON `' . $this->join_name.'`.`'.$value['join']['local_key'] . '` = `' . $value['join']['foreign_table'].'`.`'.$value['join']['foreign_key'] .'`';
-                } // if join 
-
-                // Wrap the table name ($key) with the join parts. The join parts will be empty strings if no join was set
-                $out .= $joinType.' `' . $key . '` ' .$this->alias.$joinOn;
-            }
-
-        } // foreach
+        } // SELECT
 
 
 
-        
-
-            // Return the tables part of the SQL statement
-            return $out;
+        // Return the tables part of the SQL statement
+        return $out;
 
     } // buildTables ()
+
+
 
 
     /**  Build the where clause
@@ -741,34 +658,60 @@ return implode(',',  $this->fields_output);
 
     private function whereElementStandard ($key, $value) {
         
+        // Add the second part of the $value array (the value) to $this->_bindArray[]
         $this->_bindArray[] .= $value[1];
 
+         // Append the first part of the $value array (the operator) to the table and return it
         return '`'.$this->table.'`'.'.'.'`'.$key .'`'. ' ' . $value[0]. ' ?';
+
     } // whereElementStandard ()
 
     private function whereElementIn ($key, $value) {
-        $x = 1;
-        $fields = '';
-        $valueArray = $value[1];
-        foreach($valueArray as $field => $newbindValue) {
-            $fields .= ($x > 1) ? ', ' : '';
-            $fields .= '?';
-            $this->_bindArray[] .= $newbindValue;
-            $x++;
-        }
 
-     return '`'.$this->table.'`'.'.'.'`'.$key .'`' . ' ' . $value[0]. ' ('.$fields.')';
+        // Set a counter to 1 so we know when to use a comma to seperate
+        $x = 1;
+
+        // Create a blank $fields variable
+        $fields = '';
+
+        // Set the second part of the $value array (the value) to $valueArray for future use
+        $valueArray = $value[1];
+
+        // Loop through $valueArray
+        foreach($valueArray as $field => $newbindValue) {
+
+            // If we are beyond the first first field, add a comma before each subsequent one and add it $fields
+            $fields .= ($x > 1) ? ', ' : '';
+
+            // Add a comma for each value in the IN statement
+            $fields .= '?';
+
+            // Add the value to $this->_bindArray[]
+            $this->_bindArray[] .= $newbindValue;
+
+            // Increment the counter
+            $x++;
+        } // foreach
+
+        // Append the first part of the $value array (the operator) to the table, place the $fields between the brackets and return it
+        return '`'.$this->table.'`'.'.'.'`'.$key .'`' . ' ' . $value[0]. ' ('.$fields.')';
+
     } // whereElementIn ()
 
     private function whereElementBetween ($key, $value) {
-        $x = 1;
-        $fields = '';
+
+        // Set the second part of the $value array (the value) to $valueArray for future use
         $valueArray = $value[1];
 
+        // Loop through $valueArray
         foreach($valueArray as $field => $newbindValue) {
+
+            // Add the value to $this->_bindArray[]
             $this->_bindArray[] .= $newbindValue; 
+
         }
 
+        // Append the first part of the $value array (the operator) to the table, followit with ' ? AND ?' and return it
         return '`'.$this->table.'`'.'.'.'`'.$key .'`' . ' ' . $value[0].  ' ? AND ?';
 
     } // whereElementBetween ()
@@ -776,7 +719,6 @@ return implode(',',  $this->fields_output);
     private function whereElementNull ($key, $value) {
         
         // It does not appear possible to bind IS NULL and IS NOT NULL so add them as they are
-
         return '`'.$this->table.'`'.'.'.'`'.$key .'`'. ' IS ' .$value[0];
     } // whereElementStandard ()
 
@@ -792,28 +734,44 @@ return implode(',',  $this->fields_output);
         execute() runs the query and returns the count and results
     */
     private function runQuery () {
+
+        // Prepare the constructed SQL statement
         if ($this->_query = $this->_pdo->prepare($this->_sql)) {
+
+            // Set a counter to one to use when binding
             $x = 1;
                    
+            // Loop through the binding array
             foreach($this->_bindArray as $param) {
                    
+                // Run the bindValue function to match the correct value to the correct placing
                 $this->_query->bindValue($x, $param);
 
+                // Increment the counter
                 $x++;
                 
             }
             
+            // Run the execute function
             $this->execute();
         }
     }
         
     private function execute () {
-        if($this->_query->execute()) {
-            $this->_results = $this->_query->fetchAll(PDO::FETCH_OBJ);
-            $this->_count = $this->_query->rowCount();
-        } else {
-            $this->_error = true;
 
+        // Check if the query has executed succesfully
+        if($this->_query->execute()) {
+
+            // It has been succesful so add the output to $this->results and set it as an object
+            $this->_results = $this->_query->fetchAll(PDO::FETCH_OBJ);
+
+            // Set the affected row count to $this->_count
+            $this->_count = $this->_query->rowCount();
+
+        } else {
+
+            // The query failed so set $this->_error to true. MORE WORK NEEDED HERE
+            $this->_error = true;
 
         }
     }
@@ -829,13 +787,19 @@ return implode(',',  $this->fields_output);
     */
     public function getRows ($length='all') {
 
+        // We return multiple results unless $length equals anything other than 'all'
         if($length!=='all') {
-            $results =  $this->_results[0];
+
+            // $length does not equal 'all' so return just the first record [0]
+            return   $this->_results[0];
+
         } else {
-            $results =  $this->_results;
+
+            // $length does equal 'all' so return all records
+            return   $this->_results;
         }
 
-        return $results;
+
     } // getRows()
 
 

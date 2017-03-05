@@ -10,12 +10,6 @@ require_once 'src/config.php';
 **/
 // ini_set('display_errors', 'ON');
 
-/**
-* Connect to the database and assign it to a variable called $db
-* When communicating with the database, we can now use $db->
-**/
-$db = DB::dbConnect();
-
 
 ?>
 
@@ -37,13 +31,7 @@ $db = DB::dbConnect();
           PDO Database Class
         </h1>
     </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="container">
-                <?php include 'src/template/nav.php'; ?>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 <div class="container">
@@ -56,8 +44,32 @@ $db = DB::dbConnect();
             <div class="page-header">
                 <h1>Database Class | Field Selection</h1>
             </div>
-            <p class="lead"> Fields are passed as separate arrays under the table element of the $tables array. This can be ommitted if you are selecting all fields.</p>
+            <p class="lead"> Fields are passed as separate arrays under the table element of the $tables array. This can be ommitted if you are selecting all fields. Only used for 'INSERT', 'UPDATE' and 'SELECT' queries.</p>
 
+
+
+            <h4>INSERT and UPDATE</h4>
+            <p>
+                <strong>The 'fields' array contains a simple column name and value pairing.</strong>
+            </p>
+            <pre>
+    $tables = array(
+        'city'=> array(
+            'fields'=>array(
+                'Name' => 'Test Name' ,
+                'Population' => "99899", 
+                'District' => "Disty", 
+                'CountryCode' => 'ZWE'
+            )
+        )
+    )</pre>
+
+
+
+            <h4>SELECT</h4>
+            <p>
+                <strong>The 'fields' array contains a separate array for each field. At the moment the array can only contain and optional alias.</strong>
+            </p>
             <pre>
     $tables = array(
         'city'=> array(
@@ -76,9 +88,7 @@ $db = DB::dbConnect();
         ), 
         
     )</pre>
-            <p>
-                <strong>The 'fields' array contains a separate array for each field. At the moment the array can only contain and optional alias.</strong>
-            </p>
+            
 
             <p>
                If you do not set any fields for a particular table, it will default to selecting all using the table name or alias <code>SELECT `city`.*</code> or <code>SELECT `CIT`.*</code> with each field comma separated <code>SELECT `CIT`.`Name` city_name, `CIT`.`Population` pop, `country`.`Code`</code>. If no fields are selected on any table, the end result will simply be <code>SELECT *</code>.

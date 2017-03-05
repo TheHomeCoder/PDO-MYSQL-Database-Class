@@ -37,13 +37,7 @@ $db = DB::dbConnect();
           PDO Database Class
         </h1>
     </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="container">
-                <?php include 'src/template/nav.php'; ?>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 <div class="container">
@@ -57,76 +51,84 @@ $db = DB::dbConnect();
                 <h1>Database Class | Insert Example</h1>
             </div>
 
+            <p class="lead">
+                Run an insert on a single table
+            </p>
+            <p>
+                Insert into the 'city' table a record with....
+                <ul>
+                    <li>'Name' = 'TestName'</li>
+                    <li>'Population' = '9999'</li>
+                    <li>'District' = 'Disty'</li>
+                    <li>'CountryCode' = 'ZWE'</li>
+                </ul>
+            </p>
 
-<p class="lead">
-    Insert into the 'city' table a record with....
-    <ul>
-        <li>'Name' = 'TestName'</li>
-        <li>'Population' = '9999'</li>
-        <li>'District' = 'Disty'</li>
-        <li>'CountryCode' = 'PSE'</li>
-    </ul>
-</p>
+            <?php 
+            /** Insert the record
+             *
+             *  Using the insert() function in the Database class ($db) pass in 
+             *  the parameters and assign the resultant array to $query_insert
+            **/
+            $query_insert = $db->insert(
+                $tables = array(
+                    'city'=> array(
+                        'fields'=>array(
+                            'Name' => 'TestName' ,
+                            'Population' => "9999", 
+                            'District' => "Disty", 
+                            'CountryCode' => 'ZWE'
+                        )
+                    )
+                )
+            );
 
-<?php 
-/** Insert the record
- *
- *  Using the insert() function in the Database class ($db) pass in 
- *  the parameters and assign the resultant array to $query_insert
-**/
-$query_insert = $db->insert(
-    $tables = array(
-        'city'=> array(
-            'fields'=>array(
-                'Name' => 'Test bName' ,
-                'Population' => "99899", 
-                'District' => "Disbty", 
-                'CountryCode' => 'ZWE'
-            )
-        )
-    )
-);
+            ?>
+            
+            <h4>Entered Array</h4>
 
-?>
+            <!-- Echo out the $query_select array to the screen using <pre> tags for formatting -->
+            <pre>
+            $query_insert = $db->insert(
+                $tables = array(
+                    'city'=> array(
+                        'fields'=>array(
+                            'Name' => 'Test bName' ,
+                            'Population' => "99899", 
+                            'District' => "Disbty", 
+                            'CountryCode' => 'ZWE'
+                        )
+                    )
+                )
+            );
+            </pre>
 
-<h4>Result</h4>
+            <?php // Show the generated SQL and bindings. Function in /src/functions/php
+            showData ($query_insert); ?>
 
-<?php
-// Shown an example of using the count() function from './src/class/DB.php'
-echo $query_insert->count() .' rows inserted<br>';
+            <h4>Returning records</h4>
+            <p>
+                We return the number of records entered using <code>$query_insert->count ()</code> and the id of the last inserted record using <code>$db->insertId ()</code>.
+            </p>
 
-// Shown an example of using the insertId() function from './src/class/DB.php'
-echo 'New record ID : ' . $db->insertId ();
-?>
 
-<h4>Entered Array</h4>
+            <h4>Result</h4>
 
-<!-- Echo out the $query_insert array to the screen using <pre> tags for formatting -->
-<pre>
-$query_insert = $db->insert(
-    'city,
-    array(
-        'FIELDS'=>array(
-            'Name' => 'TestName' ,
-            'Population' => "9999", 
-            'District' => "Disty", 
-            'CountryCode' => 'PSE'
-        )
-    )
-);
-</pre>
+            <?php
+            // Shown an example of using the count() function from './src/class/DB.php'
+            echo $query_insert->count() .' rows inserted<br>';
 
-<?php // Show the generated SQL and bindings. Function in /src/functions/php
-showData ($query_insert); ?>
-  </div>
-      </div>
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js">
-      </script>
-      <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js">
-      </script>
-      
+            // Shown an example of using the insertId() function from './src/class/DB.php'
+            echo 'New record ID : ' . $db->insertId ();
+            ?>
+
+        </div>
     </div>
-    <?php include 'src/template/footer.php'; ?>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="https://netdna.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+      
+</div>
+<?php include 'src/template/footer.php'; ?>
 
 </body>
 </html>

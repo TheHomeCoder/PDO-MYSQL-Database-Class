@@ -37,13 +37,7 @@ $db = DB::dbConnect();
           PDO Database Class
         </h1>
     </div>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="container">
-                <?php include 'src/template/nav.php'; ?>
-            </div>
-        </div>
-    </div>
+
 </div>
 
 <div class="container">
